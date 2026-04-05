@@ -37,6 +37,7 @@ NSString *const BKUserConfigiCloudKeys = @"iCloudKeysSync";
 NSString *const BKUserConfigAutoLock = @"autoLock";
 NSString *const BKUserConfigShowSmartKeysWithXKeyBoard = @"ShowSmartKeysWithXKeyBoard";
 NSString *const BKUserConfigMuteSmartKeysPlaySound = @"BKUserConfigMuteSmartKeysPlaySound";
+NSString *const BKUserConfigKeepScreenOn = @"keepScreenOn";
 NSString *const BKUserConfigChangedNotification = @"BKUserConfigChangedNotification";
 
 

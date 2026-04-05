@@ -287,6 +287,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
       return
     }
 
+    UIApplication.shared.isIdleTimerDisabled = BKUserConfigurationManager.userSettingsValue(forKey: BKUserConfigKeepScreenOn)
+
     // 0. Local Auth AutoLock Check on old screens
     _lockNonInteractiveScreenIfNeeded()
 

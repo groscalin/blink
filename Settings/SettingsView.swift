@@ -42,6 +42,7 @@ struct SettingsView: View {
   @State private var _iCloudSyncOn = BKUserConfigurationManager.userSettingsValue(forKey: BKUserConfigiCloud)
   @State private var _autoLockOn = BKUserConfigurationManager.userSettingsValue(forKey: BKUserConfigAutoLock)
   @State private var _xCallbackUrlOn = BLKDefaults.isXCallBackURLEnabled()
+  @State private var _keepScreenOn = BKUserConfigurationManager.userSettingsValue(forKey: BKUserConfigKeepScreenOn)
   @State private var _defaultUser = BLKDefaults.defaultUserName() ?? ""
   @StateObject private var _entitlements: EntitlementsManager = .shared
   @StateObject private var _model = PurchasesUserModel.shared
@@ -172,6 +173,13 @@ struct SettingsView: View {
             Text(_autoLockOn ? "On" : "Off").foregroundColor(.secondary)
           }
         }, storyBoardId: "BKSecurityConfigurationViewController")
+        Toggle(isOn: $_keepScreenOn) {
+          Label("Keep Screen On", systemImage: "sun.max")
+        }
+        .onChange(of: _keepScreenOn) { newValue in
+          BKUserConfigurationManager.setUserSettingsValue(newValue, forKey: BKUserConfigKeepScreenOn)
+          UIApplication.shared.isIdleTimerDisabled = newValue
+        }
         RowWithStoryBoardId(content: {
           HStack {
             Label("X Callback Url", systemImage: "link")
@@ -232,6 +240,7 @@ struct SettingsView: View {
       _iCloudSyncOn = BKUserConfigurationManager.userSettingsValue(forKey: BKUserConfigiCloud)
       _autoLockOn = BKUserConfigurationManager.userSettingsValue(forKey: BKUserConfigAutoLock)
       _xCallbackUrlOn = BLKDefaults.isXCallBackURLEnabled()
+      _keepScreenOn = BKUserConfigurationManager.userSettingsValue(forKey: BKUserConfigKeepScreenOn)
       _defaultUser = BLKDefaults.defaultUserName() ?? ""
 
     }
