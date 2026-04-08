@@ -368,6 +368,82 @@ function term_loadFontFromCss(url, name) {
   term_setFontFamily(name);
 }
 
+function term_getTextAtPoint(x, y) {
+  var range = document.caretRangeFromPoint(x, y);
+  if (!range) return null;
+
+  var node = range.startContainer;
+  if (node.nodeType !== Node.TEXT_NODE) return null;
+
+  var nodeOffset = range.startOffset;
+
+  // Walk up to x-row
+  var row = node.parentElement;
+  while (row && row.nodeName.toLowerCase() !== 'x-row') {
+    row = row.parentElement;
+  }
+  if (!row) return null;
+
+  // Compute offset of tapped character within this row's text
+  var offsetInRow = 0;
+  var walker = document.createTreeWalker(row, NodeFilter.SHOW_TEXT);
+  while (walker.nextNode()) {
+    var n = walker.currentNode;
+    if (n === node) { offsetInRow += nodeOffset; break; }
+    offsetInRow += n.textContent.length;
+  }
+
+  // Trim both leading and trailing whitespace.
+  // Terminal rows are padded to column width AND may have leading indent spaces.
+  function trimRow(s) { return s.trim(); }
+
+  // A row is a URL continuation line if it contains no spaces after full trim.
+  // Regular output (prompts, messages) contains spaces between words.
+  function isUrlRow(trimmed) { return trimmed.length > 0 && trimmed.indexOf(' ') === -1; }
+
+  // Compute the leading-whitespace length of the current row so we can adjust
+  // offsetInRow to be relative to the trimmed text.
+  var rowFull = row.textContent;
+  var rowTrimmed = trimRow(rowFull);
+  var leadingLen = rowFull.length - rowFull.replace(/^\s+/, '').length;
+  var offsetInRowTrimmed = Math.max(0, offsetInRow - leadingLen);
+
+  // Collect preceding rows that look like URL continuation lines
+  var prevRows = [];
+  var curr = row.previousElementSibling;
+  for (var i = 0; i < 10 && curr && curr.nodeName.toLowerCase() === 'x-row'; i++) {
+    var t = trimRow(curr.textContent);
+    if (!isUrlRow(t)) break;
+    prevRows.unshift(t);
+    curr = curr.previousElementSibling;
+  }
+
+  // Collect following rows
+  var nextRows = [];
+  curr = row.nextElementSibling;
+  for (var i = 0; i < 10 && curr && curr.nodeName.toLowerCase() === 'x-row'; i++) {
+    var t = trimRow(curr.textContent);
+    if (!isUrlRow(t)) break;
+    nextRows.push(t);
+    curr = curr.nextElementSibling;
+  }
+
+  var multilineText = prevRows.concat([rowTrimmed]).concat(nextRows).join('');
+  var prefixLen = prevRows.reduce(function(sum, r) { return sum + r.length; }, 0);
+  var textOffset = prefixLen + offsetInRowTrimmed;
+
+  var cr = range.getBoundingClientRect();
+  var rect = '{{' + cr.x + ', ' + cr.y + '},{' + cr.width + ', ' + cr.height + '}}';
+
+  return {
+    base: node.textContent,
+    offset: nodeOffset,
+    text: multilineText,
+    textOffset: textOffset,
+    rect: rect
+  };
+}
+
 function term_getCurrentSelection() {
   const selection = document.getSelection();
     if (!selection || selection.rangeCount === 0 || selection.type === 'Caret') {

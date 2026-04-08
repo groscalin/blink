@@ -280,9 +280,32 @@ class UIScrollViewWithoutHitTest: UIScrollView {
             _scrollView.panGestureRecognizer.isEnabled = false
             _termScrollView.panGestureRecognizer.isEnabled = false
           }
-        } else {
-          _wkWebView?.evaluateJavaScript("term_reportMouseClick(\(point.x), \(point.y), 1, \(BLKDefaults.isKeyCastsOn() ? "true" : "false"));", completionHandler: nil)
+          return
         }
+
+        // Check for URL at tap point before forwarding to terminal
+        _wkWebView?.evaluateJavaScript("JSON.stringify(term_getTextAtPoint(\(point.x), \(point.y)))") { [weak self] result, _ in
+          guard let self = self else { return }
+          var detectedURL: URL? = nil
+          if let jsonStr = result as? String,
+             let data = jsonStr.data(using: .utf8),
+             let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            detectedURL = self._detectURL(in: dict)
+          }
+          DispatchQueue.main.async {
+            if let url = detectedURL {
+              self._showLinkMenu(for: url, at: point)
+            } else {
+              self._wkWebView?.evaluateJavaScript("term_reportMouseClick(\(point.x), \(point.y), 1, \(BLKDefaults.isKeyCastsOn() ? "true" : "false"));", completionHandler: nil)
+              if !wasInDragMode {
+                if let target = self._wkWebView?.target(forAction: #selector(self.focusOnShellAction), withSender: self) as? UIResponder {
+                  target.perform(#selector(self.focusOnShellAction), with: self)
+                }
+              }
+            }
+          }
+        }
+        return
       }
 
       if !_cmdKeyPressed && !wasInDragMode {
@@ -292,6 +315,75 @@ class UIScrollViewWithoutHitTest: UIScrollView {
       }
     default: break
     }
+  }
+
+  private func _detectURL(in data: [String: Any]) -> URL? {
+    guard let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
+    else { return nil }
+
+    // Use the multi-row combined text with the offset of the tapped character.
+    // JS collects adjacent URL-continuation rows (no-space rows) and concatenates them,
+    // so long wrapped URLs are reconstructed before detection.
+    if let text = data["text"] as? String, !text.isEmpty {
+      let offset = data["textOffset"] as? Int ?? 0
+      let nsText = text as NSString
+      var found: URL? = nil
+
+      // First pass: find a URL that contains the tapped offset
+      detector.enumerateMatches(in: text, range: NSRange(location: 0, length: nsText.length)) { result, _, stop in
+        guard let result = result, let url = result.url else { return }
+        let loc = result.range.location
+        let end = loc + result.range.length
+        if loc <= offset && offset <= end {
+          found = url
+          stop.pointee = true
+        }
+      }
+      if let found = found { return found }
+
+      // Second pass: find the URL nearest to the tapped offset
+      var nearestURL: URL? = nil
+      var nearestDist = Int.max
+      detector.enumerateMatches(in: text, range: NSRange(location: 0, length: nsText.length)) { result, _, stop in
+        guard let result = result, let url = result.url else { return }
+        let loc = result.range.location
+        let end = loc + result.range.length
+        let dist = min(abs(loc - offset), abs(end - offset))
+        if dist < nearestDist { nearestDist = dist; nearestURL = url }
+      }
+      if let found = nearestURL { return found }
+    }
+
+    return nil
+  }
+
+  private func _showLinkMenu(for url: URL, at point: CGPoint) {
+    guard let webView = _wkWebView,
+          let vc = webView.window?.rootViewController
+    else { return }
+
+    let title = url.host ?? url.absoluteString
+    let alert = UIAlertController(title: title, message: nil, preferredStyle: .actionSheet)
+
+    alert.addAction(UIAlertAction(title: "Copy URL", style: .default) { _ in
+      UIPasteboard.general.url = url
+    })
+    alert.addAction(UIAlertAction(title: "Open", style: .default) { _ in
+      UIApplication.shared.open(url)
+    })
+    alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+
+    if let popover = alert.popoverPresentationController {
+      let rect = CGRect(x: point.x, y: point.y, width: 1, height: 1)
+      popover.sourceView = webView
+      popover.sourceRect = rect
+    }
+
+    var presenter = vc
+    while let presented = presenter.presentedViewController {
+      presenter = presented
+    }
+    presenter.present(alert, animated: true)
   }
   
   @objc func _on2fTap(_ recognizer: UITapGestureRecognizer) {
