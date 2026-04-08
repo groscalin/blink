@@ -731,25 +731,45 @@ struct winsize __winSizeFromJSON(NSDictionary *json) {
   __block NSURL *result = nil;
   NSString *text = data[@"base"];
   NSInteger offset = [data[@"offset"] integerValue];
-  
-  if (text == nil || [text length] == 0) {
-    return nil;
-  }
-  
+
   NSDataDetector * dataDetector = [NSDataDetector dataDetectorWithTypes:NSTextCheckingTypeLink error:nil];
-  [dataDetector enumerateMatchesInString:text options:kNilOptions range:NSMakeRange(0, [text length])
-                              usingBlock:^(NSTextCheckingResult * _Nullable res, NSMatchingFlags flags, BOOL * _Nonnull stop) {
-                                
-                                if (res == nil) {
-                                  return;
-                                }
-                                NSURL *url = res.URL;
-                                
-                                if (url && res.range.location <= offset && res.range.location + res.range.length >= offset) {
-                                  result = url;
-                                  *stop = YES;
-                                }
-                              }];
+
+  if (text.length > 0) {
+    [dataDetector enumerateMatchesInString:text options:kNilOptions range:NSMakeRange(0, [text length])
+                                usingBlock:^(NSTextCheckingResult * _Nullable res, NSMatchingFlags flags, BOOL * _Nonnull stop) {
+                                  if (res == nil) {
+                                    return;
+                                  }
+                                  NSURL *url = res.URL;
+                                  if (url && res.range.location <= offset && res.range.location + res.range.length >= offset) {
+                                    result = url;
+                                    *stop = YES;
+                                  }
+                                }];
+  }
+
+  // If no URL found in the anchor node, try the full selection text with
+  // whitespace stripped. Terminal line-wrapping inserts spaces/newlines into
+  // long URLs, and each line lives in a separate DOM node so `base` only
+  // contains one fragment. Stripping whitespace reconstructs the full URL.
+  if (!result) {
+    NSString *selectedText = data[@"text"];
+    if (selectedText.length > 0) {
+      NSString *stripped = [[selectedText componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] componentsJoinedByString:@""];
+      if (stripped.length > 0) {
+        [dataDetector enumerateMatchesInString:stripped options:kNilOptions range:NSMakeRange(0, stripped.length)
+                                    usingBlock:^(NSTextCheckingResult * _Nullable res, NSMatchingFlags flags, BOOL * _Nonnull stop) {
+                                      if (res == nil) return;
+                                      NSURL *url = res.URL;
+                                      if (url) {
+                                        result = url;
+                                        *stop = YES;
+                                      }
+                                    }];
+      }
+    }
+  }
+
   return result;
 }
 
