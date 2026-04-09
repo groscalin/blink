@@ -54,7 +54,8 @@ extension KBLayout {
       .wideKey(.esc,  traits: .default - .portrait),
       .key(.ctrl, traits: .default),
       .key(.alt,  traits: .default),
-      .icon(.hideKB, traits: .default - .cmdOff),
+      .icon(.hideKB,   traits: .default - .cmdOff),
+      .icon(.imeInput, traits: .default - .cmdOn - .hkb),
     ], [
       .key(.tab,  traits: .default - .cmdOn),
       .vertical2("`", "~",  traits: .default - .cmdOn),
@@ -171,8 +172,9 @@ extension KBLayout {
       //
      .flexKey(.esc,  traits: .default - .cmdOn - .skb + .hkb + .suggestionsOn),
    ], [
-     .icon(   .copy,  traits: .all - .selectionOff - .skb),
-     .icon(   .paste, traits: .all - .clipboardOff - .skb),
+     .icon(   .copy,     traits: .all - .selectionOff - .skb),
+     .icon(   .paste,    traits: .all - .clipboardOff - .skb),
+     .icon(   .imeInput, traits: .default - .cmdOn - .hkb),
      .arrows(traits: .default - .cmdOn),
      .wideKey(    .cmd,   traits: .default + .hkb),
      .icon(   .cmd,   traits: .defaultSuggestionsOnly + .hkb),
@@ -256,8 +258,9 @@ extension KBLayout {
        //
       .flexKey(    .esc     ,  traits: .default - .cmdOn - .skb + .hkb + .suggestionsOn),
     ], [
-      .icon(.copy,  traits: .all - .selectionOff - .skb),
-      .icon(.paste, traits: .all - .clipboardOff - .skb),
+      .icon(.copy,     traits: .all - .selectionOff - .skb),
+      .icon(.paste,    traits: .all - .clipboardOff - .skb),
+      .icon(.imeInput, traits: .default - .cmdOn - .hkb),
       .arrows(traits: .default - .cmdOn),
       .wideKey(    .cmd,   traits: .default + .hkb),
       .icon(.cmd,    traits: .defaultSuggestionsOnly + .hkb),
@@ -337,8 +340,9 @@ extension KBLayout {
       //
       .flexKey(.esc, traits: .default - .cmdOn - .skb + .hkb + .suggestionsOn),
     ], [
-      .icon(   .copy,  traits: .all - .selectionOff - .skb),
-      .icon(   .paste, traits: .all - .clipboardOff - .skb),
+      .icon(   .copy,     traits: .all - .selectionOff - .skb),
+      .icon(   .paste,    traits: .all - .clipboardOff - .skb),
+      .icon(   .imeInput, traits: .default - .cmdOn - .hkb),
 //      .key(    .left,  traits: .default),
 //      .key(    .down,  traits: .default),
 //      .key(    .up,    traits: .default),

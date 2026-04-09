@@ -81,6 +81,7 @@ enum KBKeyValue: Hashable, Identifiable, Codable {
   case copy
   case paste
   case hideKB
+  case imeInput
   case text(value: String)
   case f(Int8)
   
@@ -95,9 +96,10 @@ enum KBKeyValue: Hashable, Identifiable, Codable {
     case .right: return "right"
     case .up:    return "up"
     case .down:   return "down"
-    case .copy:   return "copy"
-    case .paste:  return "paste"
-    case .hideKB: return "hideKB"
+    case .copy:     return "copy"
+    case .paste:    return "paste"
+    case .hideKB:   return "hideKB"
+    case .imeInput: return "imeInput"
     case .text(let value): return value
     case .f(let value): return "F\(value)"
     }
@@ -160,7 +162,8 @@ enum KBKeyValue: Hashable, Identifiable, Codable {
     case .paste: return "Paste"
     case .tab: return "Tab"
     case .up: return "Up"
-    case .hideKB: return "Hide Keyboard"
+    case .hideKB:   return "Hide Keyboard"
+    case .imeInput: return "IME Input"
     case .text(let value): return value
     case .f(let value): return "F\(value)"
     }
@@ -182,7 +185,8 @@ enum KBKeyValue: Hashable, Identifiable, Codable {
     case .up: return UIKeyCommand.inputUpArrow
     case .down: return UIKeyCommand.inputDownArrow
     case .tab: return "\t"
-    case .hideKB: return "hideKeyboard"
+    case .hideKB:   return "hideKeyboard"
+    case .imeInput: return "imeInput"
     default: return nil
     }
   }
@@ -201,10 +205,11 @@ enum KBKeyValue: Hashable, Identifiable, Codable {
     case .down:  return "arrow.down"
 
       
-    case .copy:   return "doc.on.doc"
-    case .paste:  return "doc.on.clipboard"
-    case .hideKB: return "keyboard.chevron.compact.down"
-    default:      return nil
+    case .copy:     return "doc.on.doc"
+    case .paste:    return "doc.on.clipboard"
+    case .hideKB:   return "keyboard.chevron.compact.down"
+    case .imeInput: return "character.cursor.ibeam"
+    default:        return nil
     }
   }
   
@@ -231,7 +236,7 @@ enum KBKeyValue: Hashable, Identifiable, Codable {
 
   var isCommand: Bool {
     switch self {
-    case .hideKB: return true
+    case .hideKB, .imeInput: return true
     default: return false
     }
   }
