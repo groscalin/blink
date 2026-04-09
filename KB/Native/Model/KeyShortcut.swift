@@ -178,6 +178,7 @@ class KeyShortcut: ObservableObject, Codable, Identifiable {
       KeyShortcut(.clipboardCopy, .command, "c"),
       KeyShortcut(.clipboardCopyRaw, [.command, .shift], "c"),
       KeyShortcut(.clipboardPaste, .command, "v"),
+      KeyShortcut(.imeInput, .command, "k"),
 
       KeyShortcut(.windowNew, [.command, .shift], "t"),
       KeyShortcut(.windowClose, [.command, .shift], "w"),

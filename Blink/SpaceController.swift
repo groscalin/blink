@@ -810,6 +810,7 @@ extension SpaceController {
     case .clipboardCopy: KBTracker.shared.input?.copy(self)
     case .clipboardCopyRaw: KBTracker.shared.input?.copyRaw(self)
     case .clipboardPaste: KBTracker.shared.input?.paste(self)
+    case .imeInput: _showIMEInputOverlay()
     case .selectionGoogle: KBTracker.shared.input?.googleSelection(self)
     case .selectionStackOverflow: KBTracker.shared.input?.soSelection(self)
     case .selectionShare: KBTracker.shared.input?.shareSelection(self)
@@ -821,6 +822,23 @@ extension SpaceController {
     }
   }
   
+  func _showIMEInputOverlay() {
+    let vc = IMEInputViewController()
+    vc.onSend = { [weak self] text in
+      self?.currentTerm()?.termDevice.write(in: text)
+    }
+    let nav = UINavigationController(rootViewController: vc)
+    nav.modalPresentationStyle = UIModalPresentationStyle.formSheet
+    if #available(iOS 15.0, *) {
+      if let sheet = nav.sheetPresentationController {
+        sheet.detents = [UISheetPresentationController.Detent.medium(),
+                         UISheetPresentationController.Detent.large()]
+        sheet.prefersGrabberVisible = true
+      }
+    }
+    present(nav, animated: true)
+  }
+
   @objc func focusOnShellAction() {
     KBTracker.shared.input?.reset()
     _focusOnShell()
@@ -1315,4 +1333,118 @@ extension SpaceController: SnippetContext {
     return self.currentDevice
   }
 
+}
+
+// MARK: - IMEInputViewController
+
+class IMEInputViewController: UIViewController, UITextViewDelegate {
+
+  var onSend: ((String) -> Void)?
+
+  private static var _savedText: String = ""
+
+  private let textView = UITextView()
+  private let placeholderLabel = UILabel()
+
+  override func viewDidLoad() {
+    super.viewDidLoad()
+    _setupUI()
+    _setupKeyCommands()
+  }
+
+  override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+    if !IMEInputViewController._savedText.isEmpty {
+      textView.text = IMEInputViewController._savedText
+      placeholderLabel.isHidden = true
+    }
+    textView.becomeFirstResponder()
+  }
+
+  private func _setupUI() {
+    view.backgroundColor = UIColor.systemBackground
+
+    navigationItem.title = "IME Input"
+    navigationItem.leftBarButtonItem = UIBarButtonItem(
+      title: "Cancel", style: .plain, target: self, action: #selector(_cancel))
+    navigationItem.rightBarButtonItems = [
+      UIBarButtonItem(title: "Send", style: .done, target: self, action: #selector(_send)),
+      UIBarButtonItem(title: "Copy", style: .plain, target: self, action: #selector(_copyAll)),
+    ]
+
+    let hintBar = UIToolbar()
+    let hint = UIBarButtonItem(title: "⌘↩ Send  ⌘⇧C Copy All  ⎋ Cancel",
+                               style: .plain, target: nil, action: nil)
+    hint.isEnabled = false
+    let flex = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+    hintBar.items = [flex, hint, flex]
+    hintBar.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(hintBar)
+
+    textView.font = UIFont.systemFont(ofSize: 17)
+    textView.layer.borderColor = UIColor.separator.cgColor
+    textView.layer.borderWidth = 0.5
+    textView.layer.cornerRadius = 8
+    textView.textContainerInset = UIEdgeInsets(top: 10, left: 8, bottom: 10, right: 8)
+    textView.translatesAutoresizingMaskIntoConstraints = false
+    textView.delegate = self
+    view.addSubview(textView)
+
+    placeholderLabel.text = "한글, 일본어 등 IME 입력 (⏎ 줄바꿈, ⌘↩ 전송)"
+    placeholderLabel.font = UIFont.systemFont(ofSize: 15)
+    placeholderLabel.textColor = UIColor.placeholderText
+    placeholderLabel.numberOfLines = 0
+    placeholderLabel.translatesAutoresizingMaskIntoConstraints = false
+    textView.addSubview(placeholderLabel)
+
+    let g = view.safeAreaLayoutGuide
+    NSLayoutConstraint.activate([
+      hintBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      hintBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      hintBar.topAnchor.constraint(equalTo: g.topAnchor),
+
+      textView.topAnchor.constraint(equalTo: hintBar.bottomAnchor, constant: 12),
+      textView.leadingAnchor.constraint(equalTo: g.leadingAnchor, constant: 16),
+      textView.trailingAnchor.constraint(equalTo: g.trailingAnchor, constant: -16),
+      textView.bottomAnchor.constraint(equalTo: g.bottomAnchor, constant: -16),
+
+      placeholderLabel.topAnchor.constraint(equalTo: textView.topAnchor, constant: 10),
+      placeholderLabel.leadingAnchor.constraint(equalTo: textView.leadingAnchor, constant: 12),
+      placeholderLabel.trailingAnchor.constraint(equalTo: textView.trailingAnchor, constant: -12),
+    ])
+  }
+
+  private func _setupKeyCommands() {
+    addKeyCommand(UIKeyCommand(
+      title: "Send", action: #selector(_send),
+      input: "\r", modifierFlags: .command))
+    addKeyCommand(UIKeyCommand(
+      title: "Copy All", action: #selector(_copyAll),
+      input: "c", modifierFlags: [.command, .shift]))
+    addKeyCommand(UIKeyCommand(
+      title: "Cancel", action: #selector(_cancel),
+      input: UIKeyCommand.inputEscape, modifierFlags: []))
+  }
+
+  @objc private func _send() {
+    let text = textView.text.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !text.isEmpty else { return }
+    dismiss(animated: true) { [weak self] in self?.onSend?(text) }
+  }
+
+  @objc private func _copyAll() {
+    let text = textView.text.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !text.isEmpty else { return }
+    UIPasteboard.general.string = text
+    dismiss(animated: true)
+  }
+
+  @objc private func _cancel() {
+    IMEInputViewController._savedText = textView.text
+    dismiss(animated: true)
+  }
+
+  func textViewDidChange(_ textView: UITextView) {
+    placeholderLabel.isHidden = !textView.text.isEmpty
+  }
 }
