@@ -844,26 +844,10 @@ static NSString * _sanitizeTextForClipboard(NSString *text) {
   NSString *text = _selectedText;
   if (text) {
     [UIPasteboard generalPasteboard].string = _sanitizeTextForClipboard(text);
-    UIMenuController * menu = [UIMenuController sharedMenuController];
-    [menu hideMenuFromView:self];
-    [self cleanSelection];
-  } else {
-    // No selection: copy the current cursor row (input line)
-    NSString *js = @"(function(){"
-      @"if(!t||!t.prompt)return '';"
-      @"return t.prompt._value||'';"
-      @"})()";
-    [_webView evaluateJavaScript:js completionHandler:^(id result, NSError *error) {
-      if (!error && [result isKindOfClass:[NSString class]]) {
-        NSString *line = [(NSString *)result stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-        if (line.length > 0) {
-          dispatch_async(dispatch_get_main_queue(), ^{
-            [UIPasteboard generalPasteboard].string = line;
-          });
-        }
-      }
-    }];
   }
+  UIMenuController * menu = [UIMenuController sharedMenuController];
+  [menu hideMenuFromView:self];
+  [self cleanSelection];
 }
 
 - (void)copyRaw:(id)sender
