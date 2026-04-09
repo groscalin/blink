@@ -290,7 +290,7 @@ function term_reportMouseEvent(name, x, y, buttons) {
 }
 
 function term_reportWheelEvent(name, x, y, deltaX, deltaY) {
-  if (!t.prompt) {
+  if (!t) {
     return;
   }
 
