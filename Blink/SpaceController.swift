@@ -811,6 +811,8 @@ extension SpaceController {
     case .clipboardCopyRaw: KBTracker.shared.input?.copyRaw(self)
     case .clipboardPaste: KBTracker.shared.input?.paste(self)
     case .imeInput: _showIMEInputOverlay()
+    case .scrollWheelUp:   currentTerm()?.termDevice.view?.scrollWheel(-120)
+    case .scrollWheelDown: currentTerm()?.termDevice.view?.scrollWheel(120)
     case .selectionGoogle: KBTracker.shared.input?.googleSelection(self)
     case .selectionStackOverflow: KBTracker.shared.input?.soSelection(self)
     case .selectionShare: KBTracker.shared.input?.shareSelection(self)

@@ -61,6 +61,8 @@ enum Command: String, Codable, CaseIterable {
   case clipboardCopyRaw
   case clipboardPaste
   case imeInput
+  case scrollWheelUp
+  case scrollWheelDown
   case selectionGoogle
   case selectionStackOverflow
   case selectionShare
@@ -104,6 +106,8 @@ enum Command: String, Codable, CaseIterable {
     case .clipboardCopyRaw:       return "Copy Raw"
     case .clipboardPaste:         return "Paste"
     case .imeInput:               return "IME Input"
+    case .scrollWheelUp:          return "Scroll Up"
+    case .scrollWheelDown:        return "Scroll Down"
     case .selectionGoogle:        return "Google Selection"
     case .selectionStackOverflow: return "StackOverflow Selection"
     case .selectionShare:         return "Share Selection"

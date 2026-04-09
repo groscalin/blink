@@ -179,6 +179,8 @@ class KeyShortcut: ObservableObject, Codable, Identifiable {
       KeyShortcut(.clipboardCopyRaw, [.command, .shift], "c"),
       KeyShortcut(.clipboardPaste, .command, "v"),
       KeyShortcut(.imeInput, .command, "k"),
+      KeyShortcut(.scrollWheelUp,   .command, UIKeyCommand.inputUpArrow),
+      KeyShortcut(.scrollWheelDown, .command, UIKeyCommand.inputDownArrow),
 
       KeyShortcut(.windowNew, [.command, .shift], "t"),
       KeyShortcut(.windowClose, [.command, .shift], "w"),

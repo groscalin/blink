@@ -106,6 +106,7 @@ extern NSString * TermViewBrowserReadyNotificationKey;
 - (void)increaseFontSize;
 - (void)decreaseFontSize;
 - (void)resetFontSize;
+- (void)scrollWheel:(CGFloat)deltaY;
 - (void)writeB64:(NSData *)data;
 - (void)displayInput:(NSString *)input;
 - (void)apiResponse:(NSString *)name response:(NSString *)response;

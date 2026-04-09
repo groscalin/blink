@@ -462,6 +462,17 @@ struct winsize __winSizeFromJSON(NSDictionary *json) {
   [_webView evaluateJavaScript:term_setFontSize([BLKDefaults selectedFontSize]) completionHandler:nil];
 }
 
+- (void)scrollWheel:(CGFloat)deltaY
+{
+  CGFloat x = self.bounds.size.width * 0.5;
+  CGFloat y = self.bounds.size.height * 0.5;
+  NSString *js = [NSString stringWithFormat:
+    @"term_reportWheelEvent(\"wheel\", %f, %f, 0, %f);", x, y, deltaY];
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [_webView evaluateJavaScript:js completionHandler:nil];
+  });
+}
+
 - (void)setClipboardWrite:(BOOL)state {
   [_webView evaluateJavaScript:term_setClipboardWrite(state) completionHandler:nil];
 }
