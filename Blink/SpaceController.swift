@@ -145,6 +145,7 @@ class SpaceController: UIViewController, LayoutInsetsProvider {
     if currentKeyboardHeight != _lastKnownKeyboardHeight {
       _lastKnownKeyboardHeight = currentKeyboardHeight
       NotificationCenter.default.post(name: NSNotification.Name(rawValue: LayoutManagerBottomInsetDidUpdate), object: nil)
+      KBTracker.shared.detectHardwareKBWithSoftwareKBHeight(height: currentKeyboardHeight)
     }
     
     if let menu = _blinkMenu {

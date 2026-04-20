@@ -230,11 +230,9 @@ import Combine
       
     }
     
-    if traitCollection.userInterfaceIdiom == .phone {
-      if hideSmartKeysWithHKB && traits.isHKBAttached {
-        _removeSmartKeys()
-        return
-      }
+    if hideSmartKeysWithHKB && traits.isHKBAttached {
+      _removeSmartKeys()
+      return
     }
     
     if traits.isFloatingKB {
